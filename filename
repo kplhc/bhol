@@ -1,0 +1,150 @@
+<html>
+<head>
+<style>
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+}
+canvas {
+display: block;
+margin: auto;
+border: 1px solid black;
+}
+</style>
+<script>
+// 定义常量
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const cellSize = 20; // 每个单元格的大小（像素）
+const rows = canvas.height / cellSize; // 行数
+const cols = canvas.width / cellSize; // 列数
+const snakeColor = "green"; // 蛇的颜色
+const foodColor = "red"; // 食物的颜色
+const bgColor = "white"; // 背景颜色
+
+// 定义变量
+let snake; // 蛇（一个由单元格坐标组成的数组）
+let direction; // 方向（一个由水平和垂直分量组成的数组）
+let food; // 食物（一个单元格坐标）
+let score; // 分数
+let gameOver; // 游戏结束标志
+
+// 初始化函数，设置初始值
+function init() {
+snake = [[5,5],[4,5],[3,5]]; // 初始蛇长为3，水平放置在画布中央偏左位置
+direction = [1,0]; // 初始方向为向右
+food = createFood(); // 随机生成食物位置
+score = 0; // 初始分数为0
+gameOver = false; // 初始游戏未结束
+}
+
+// 绘制单元格函数，根据给定的行列号和颜色，在画布上绘制一个矩形
+function drawCell(row,col,color) {
+ctx.fillStyle=color ;
+ctx.fillRect(row*cellSize,col*cellSize,c ellSize,c ellSize);
+}
+
+// 绘制蛇函数，遍历蛇数组，用蛇颜色绘制每个单元格，并用背景颜色绘制最后一个单元格（相当于擦除）
+function drawSnake() {
+for (let i=0;i<snake.length;i++) {
+drawCell(snake[i][0],snake[i][1],s nakeColor);
+}
+drawCell(snake[snake.length-1][0],snake[snake.length-1][1],b gColor);
+}
+// 绘制食物函数，用食物颜色绘制食物单元格
+function drawFood() {
+drawCell(food[0],food[1],foodColor);
+}
+
+// 绘制分数函数，在画布左上角显示分数
+function drawScore() {
+ctx.font = "20px Arial";
+ctx.fillStyle = "black";
+ctx.fillText("Score: "+score,10,20);
+}
+
+// 移动蛇函数，根据方向更新蛇数组，并检查是否吃到食物或者撞到墙或自己身体
+function moveSnake() {
+let head = snake[0]; // 获得蛇头位置
+let newHead = [head[0]+direction[0],head[1]+direction[1]]; // 计算新的蛇头位置
+snake.unshift(newHead); // 把新的蛇头插入到数组开头
+if (newHead[0] == food[0] && newHead[1] == food[1]) { // 如果新的蛇头和食物重合，说明吃到了食物
+score++; // 分数加一
+food = createFood(); // 重新生成食物位置
+} else {
+snake.pop(); // 如果没有吃到食物，就把数组最后一个元素（相当于蛇尾）删除
+}
+if (newHead[0]<0 || newHead[0]>=cols || newHead[1]<0 || newHead[1]>=rows) { // 如果新的蛇头超出了画布边界，说明撞到了墙
+gameOver = true; // 游戏结束标志设为真
+}
+for (let i=1;i<snake.length;i++) { // 遍历除了蛇头以外的其他单元格，如果有和新的蛇头重合的，说明撞到了自己身体
+if (newHead[0] == snake[i][0] && newHead [1] == snake[i][1]) {
+gameOver = true; // 游戏结束标志设为真
+}
+}
+}
+
+// 生成食物函数，随机生成一个不和蛇重合的单元格坐标作为食物位置，并返回它
+function createFood() {
+let x,y;
+do {
+x = Math.floor(Math.random()*cols); / /随机生成一个列号（横坐标）
+y = Math.floor(Math.random()*rows); / /随机生成一个行号（纵坐标）
+} while (isOnSnake(x,y)); / /如果生成的坐标和蛇重合了，就重新生成，直到不重合为止
+
+return [x,y]; / /返回生成的坐标
+
+}
+
+// 判断是否在蛇上函数，根据给定的行列号判断是否和蛇数组中的任意一个单元格重合，并返回布尔值（真或假）
+function isOnSnake(row,col) {
+for (let i=0;i<snake.length;i++) { / /遍历蛇数组中的每个单元格坐标
+if (row == snake[i][0] && col == snake[i][1]) { / /如果有和给定行列号相同的，说明在蛇上
+return true; / /返回真值
+
+}
+}
+return false; / /如果没有和给定行列号相同的，说明不在蛇上
+
+return false; 
+}
+// 处理键盘事件函数，根据按下的方向键改变方向数组的值，但不能反向
+function handleKey(e) {
+switch (e.keyCode) {
+case 37: // 左箭头
+if (direction[0] != 1) { // 如果当前不是向右，才能改为向左
+direction = [-1,0];
+}
+break;
+case 38: // 上箭头
+if (direction[1] != 1) { // 如果当前不是向下，才能改为向上
+direction = [0,-1];
+}
+break;
+case 39: // 右箭头
+if (direction[0] != -1) { // 如果当前不是向左，才能改为向右
+direction = [1,0];
+}
+break;
+case 40: // 下箭头
+if (direction[1] != -1) { // 如果当前不是向上，才能改为向下
+direction = [0,1];
+}
+break;
+}
+}
+
+// 游戏循环函数，每隔一段时间就重绘画布，并判断是否游戏结束，如果结束就清除定时器并显示提示信息
+function gameLoop() {
+ctx.clearRect(0,0,canvas.width,c anvas.height); / /清空画布
+
+drawSnake(); / /绘制蛇
+
+drawFood(); / /绘制食物
+
+drawScore(); / /绘制分数
+
+moveSnake(); / /移动蛇
+
+if (gameOver) { / /
